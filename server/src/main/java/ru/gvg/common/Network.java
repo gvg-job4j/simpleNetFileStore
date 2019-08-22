@@ -29,7 +29,8 @@ public class Network {
         ObjectOutputStream oos = null;
         try {
             oos = new ObjectOutputStream(clientSocket.getOutputStream());
-            AnswerMessage aMsg = new AnswerMessage(status, msg, userFiles, userSize);
+//            AnswerMessage aMsg = new AnswerMessage(status, msg, userFiles, userSize);
+            AnswerMessage aMsg = new AnswerMessage(status, msg, userSize);
             oos.writeObject(aMsg);
             oos.flush();
         } catch (IOException e) {

@@ -40,7 +40,7 @@ public class MultiThreadServer extends Thread {
     /**
      * Max count parallel connections.
      */
-    private static ExecutorService ex = Executors.newFixedThreadPool(2);
+    private ExecutorService ex = Executors.newFixedThreadPool(Consts.NTHREADS);
 
     /**
      * Metod create new thread for server work.
@@ -55,7 +55,7 @@ public class MultiThreadServer extends Thread {
     }
 
     /**
-     * Create server socket, create threads for connetcted clients.
+     * Create server socket, create threads for connected clients.
      */
     @Override
     public void run() {
@@ -76,6 +76,7 @@ public class MultiThreadServer extends Thread {
         } catch (IOException e) {
             textArea.append(Consts.formatForDate.format(new Date()) + ". Not find free port! Server not started!\n");
             e.printStackTrace();
+            this.interrupt();
         }
     }
 
@@ -83,13 +84,16 @@ public class MultiThreadServer extends Thread {
      * Metod close server socket.
      */
     void stopCurrentServer() {
-        try {
-            ex.shutdown();
-            serverSocket.close();
-            textArea.append(Consts.formatForDate.format(new Date()) + ". Closing - DONE.\n");
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+                textArea.append(Consts.formatForDate.format(new Date()) + ". Closing - DONE.\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        ex.shutdown();
+        this.interrupt();
     }
 
     /**

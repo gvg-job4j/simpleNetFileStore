@@ -35,5 +35,9 @@ public class Consts {
      * Default time for user session.
      */
     public static final int SESSION_TIME = 300;
+    /**
+     * Maximum number of simultaneously opened connections.
+     */
+    public static final int NTHREADS = 5;
 
 }

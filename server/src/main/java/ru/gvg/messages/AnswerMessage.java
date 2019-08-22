@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @author Valeriy Gyrievskikh
  * @since 01.03.2019
  */
-public class AnswerMessage extends AbstractMessage implements Serializable {
+public class AnswerMessage implements Serializable {
 
     /**
      * Transfer files.
@@ -20,6 +20,8 @@ public class AnswerMessage extends AbstractMessage implements Serializable {
      * Size of files.
      */
     private int size;
+    private boolean result;
+    private String msg;
 
     /**
      * Metod create message with parameters.
@@ -30,8 +32,15 @@ public class AnswerMessage extends AbstractMessage implements Serializable {
      * @param size   Size of files.
      */
     public AnswerMessage(boolean result, String msg, File[] files, int size) {
-        super(result, msg);
+        this.result = result;
+        this.msg = msg;
         this.files = files;
+        this.size = size;
+    }
+
+    public AnswerMessage(boolean result, String msg, int size) {
+        this.result = result;
+        this.msg = msg;
         this.size = size;
     }
 
@@ -51,5 +60,9 @@ public class AnswerMessage extends AbstractMessage implements Serializable {
      */
     public int getSize() {
         return size;
+    }
+
+    public String getMsg() {
+        return msg;
     }
 }
