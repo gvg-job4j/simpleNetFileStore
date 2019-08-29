@@ -1,8 +1,6 @@
-package ru.gvg.server_side;
+package ru.gvg.serverside;
 
 import javax.swing.*;
-
-import ru.gvg.common.Consts;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -71,13 +69,15 @@ public class ServerGUI extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == startButton) {
             if (server == null || !server.isAlive()) {
-                server = new MultiThreadServer(textArea, Consts.PORT);
+                server = new MultiThreadServer(textArea);
                 server.start();
                 startButton.setEnabled(false);
                 stopButton.setEnabled(true);
             }
         } else if (e.getSource() == stopButton) {
-            if (server != null && server.isAlive()) server.stopCurrentServer();
+            if (server != null && server.isAlive()) {
+                server.stopCurrentServer();
+            }
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
         }

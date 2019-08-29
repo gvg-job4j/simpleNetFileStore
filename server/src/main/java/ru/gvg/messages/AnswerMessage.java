@@ -44,6 +44,11 @@ public class AnswerMessage implements Serializable {
         this.size = size;
     }
 
+    public AnswerMessage(boolean result, String msg) {
+        this.result = result;
+        this.msg = msg;
+    }
+
     /**
      * Metod return transfer files.
      *
@@ -64,5 +69,9 @@ public class AnswerMessage implements Serializable {
 
     public String getMsg() {
         return msg;
+    }
+
+    public boolean isResult() {
+        return result;
     }
 }

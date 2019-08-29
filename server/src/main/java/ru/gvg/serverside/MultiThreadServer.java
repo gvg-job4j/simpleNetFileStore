@@ -1,4 +1,4 @@
-package ru.gvg.server_side;
+package ru.gvg.serverside;
 
 import ru.gvg.common.Consts;
 
@@ -19,15 +19,18 @@ import java.util.concurrent.Executors;
  * @since 01.03.2019
  */
 public class MultiThreadServer extends Thread {
-
     /**
-     * Open port on server.
+     *
      */
-    private int port = Consts.PORT;
+    private final BD bd;
+    /**
+     *
+     */
+    private final PasswordAuthentication pa;
     /**
      * Area for text messages.
      */
-    private JTextArea textArea;
+    private final JTextArea textArea;
     /**
      * Open socket for client connections.
      */
@@ -46,12 +49,12 @@ public class MultiThreadServer extends Thread {
      * Metod create new thread for server work.
      *
      * @param textArea Area for text messages.
-     * @param port     Port where server socket will be opened.
      */
-    MultiThreadServer(JTextArea textArea, int port) {
-        this.port = port;
+    MultiThreadServer(JTextArea textArea) {
         this.textArea = textArea;
-        threadList = new ArrayList<>();
+        this.threadList = new ArrayList<>();
+        this.bd = new BD();
+        this.pa = new PasswordAuthentication();
     }
 
     /**
@@ -60,13 +63,13 @@ public class MultiThreadServer extends Thread {
     @Override
     public void run() {
         try {
-            InetAddress address = InetAddress.getLocalHost();//172.16.172.252
-            serverSocket = new ServerSocket(port, 2);
-            textArea.append(Consts.formatForDate.format(new Date()) + ". Server started. IP: " + address + ", port: " + serverSocket.getLocalPort() + "\n");
+            InetAddress address = InetAddress.getLocalHost(); //172.16.172.252
+            serverSocket = new ServerSocket(Consts.PORT, 2);
+            textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Server started. IP: " + address + ", port: " + serverSocket.getLocalPort() + "\n");
             while (true) {
                 try {
                     Socket client = serverSocket.accept();
-                    ServerThread sThread = new ServerThread(this, client, textArea);
+                    ServerThread sThread = new ServerThread(this, client, textArea, bd, pa);
                     ex.execute(sThread);
                     threadList.add(sThread);
                 } catch (IOException e) {
@@ -74,7 +77,7 @@ public class MultiThreadServer extends Thread {
                 }
             }
         } catch (IOException e) {
-            textArea.append(Consts.formatForDate.format(new Date()) + ". Not find free port! Server not started!\n");
+            textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Not find free port! Server not started!\n");
             e.printStackTrace();
             this.interrupt();
         }
@@ -87,7 +90,7 @@ public class MultiThreadServer extends Thread {
         if (serverSocket != null) {
             try {
                 serverSocket.close();
-                textArea.append(Consts.formatForDate.format(new Date()) + ". Closing - DONE.\n");
+                textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Closing - DONE.\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }

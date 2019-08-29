@@ -18,7 +18,7 @@ public class Consts {
     /**
      * Format for date representation.
      */
-    public static final SimpleDateFormat formatForDate = new SimpleDateFormat("hh:mm:ss a");
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("hh:mm:ss a");
     /**
      * Path for file store folder on server.
      */
@@ -38,6 +38,6 @@ public class Consts {
     /**
      * Maximum number of simultaneously opened connections.
      */
-    public static final int NTHREADS = 5;
+    public static final int NTHREADS = 2;
 
 }

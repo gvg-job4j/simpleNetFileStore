@@ -21,7 +21,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>ru.gvg.server_side.ServerGUI</mainClass>
+                            <mainClass>ru.gvg.serverside.ServerGUI</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

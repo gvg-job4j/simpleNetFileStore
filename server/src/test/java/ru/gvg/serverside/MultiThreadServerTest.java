@@ -1,4 +1,4 @@
-package ru.gvg.server_side;
+package ru.gvg.serverside;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,7 +22,7 @@ public class MultiThreadServerTest {
 
     @Before
     public void createNewServer() {
-        server = new MultiThreadServer(new JTextArea(), Consts.PORT);
+        server = new MultiThreadServer(new JTextArea());
     }
 
     @After
