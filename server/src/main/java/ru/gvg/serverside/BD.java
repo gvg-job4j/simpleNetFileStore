@@ -1,8 +1,10 @@
 package ru.gvg.serverside;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
-import java.util.HashMap;
+import java.util.Properties;
 import java.util.UUID;
 
 /**
@@ -13,40 +15,57 @@ public class BD {
 
     private String userUID;
     private String userId;
-    private HashMap<ServerThread, Connection> connections = new HashMap<>();
 
-    {
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+    private Properties properties;
+
+//    public Properties getConfig() {
+//        return config;
+//    }
+
+    public BD() {
+//        try (InputStream in = BD.class.getClassLoader().getResourceAsStream("database.properties")) {
+//            config = new Properties();
+//            config.load(in);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
+
+    //    private HashMap<ServerThread, Connection> connections = new HashMap<>();
+//
+//    {
+//        try {
+//            Class.forName("org.sqlite.JDBC");
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     private synchronized Connection getConnection(ServerThread thread) {
-        Connection connection = null;
-        try {
-            if (connections.containsKey(thread)) {
-                connections.remove(thread);
-            }
-            connection = DriverManager.getConnection("jdbc:sqlite:MyDB.db");
-            connections.put(thread, connection);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return connection;
+        return thread.getConnection();
+//        Connection connection = null;
+//        try {
+//            if (connections.containsKey(thread)) {
+//                connections.remove(thread);
+//            }
+//            connection = DriverManager.getConnection("jdbc:sqlite:MyDB.db");
+//            connections.put(thread, connection);
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        return connection;
     }
 
-    public synchronized boolean verifyUser(ServerThread thread, String log, String pass) throws Exception {
+    public synchronized boolean verifyUser(Connection connection, String log, String pass) throws Exception {
         boolean userFind = false;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
 
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("SELECT PASS FROM Users WHERE USER = '" + log + "'");
             if (rs.next()) {
                 String passFromBD = rs.getString("PASS");
-                if (thread.getPa().check(pass, passFromBD)) {
+                if (PasswordAuthentication.check(pass, passFromBD)) {
                     userFind = true;
                 } else {
                     userId = null;
@@ -58,9 +77,9 @@ public class BD {
         return userFind;
     }
 
-    public synchronized boolean getUser(ServerThread thread, String log) throws SQLException {
+    public synchronized boolean getUser(Connection connection, String log) throws SQLException {
         boolean userFind = false;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
 
             Statement statement = connection.createStatement();
@@ -75,11 +94,11 @@ public class BD {
         return userFind;
     }
 
-    public synchronized boolean addUser(ServerThread thread, String log, String pass) throws Exception {
+    public synchronized boolean addUser(Connection connection, String log, String pass) throws Exception {
 
         boolean userCreated = false;
-        if (!getUser(thread, log)) {
-            Connection connection = getConnection(thread);
+        if (!getUser(connection, log)) {
+//            Connection connection = getConnection(thread);
             if (connection != null) {
                 try {
                     userUID = createUID();
@@ -94,7 +113,6 @@ public class BD {
                         }
                         rs.close();
                     }
-
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -112,8 +130,8 @@ public class BD {
         return userUID;
     }
 
-    public synchronized boolean changePassword(ServerThread thread, String log, String newPass) throws Exception {
-        Connection connection = getConnection(thread);
+    public synchronized boolean changePassword(Connection connection, String log, String newPass) throws Exception {
+//        Connection connection = getConnection(thread);
         boolean passChanged = false;
         if (connection != null) {
             try {
@@ -128,9 +146,9 @@ public class BD {
         return passChanged;
     }
 
-    public String getFilePathOnServer(ServerThread thread, String fileID) throws SQLException {
+    public String getFilePathOnServer(Connection connection, String fileID) throws SQLException {
         String pathToFile = null;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("SELECT server_path FROM Files WHERE file_id = '" + fileID + "'");
@@ -142,11 +160,11 @@ public class BD {
         return pathToFile;
     }
 
-    public synchronized boolean addFile(ServerThread thread, String fileName, String serverPath, String localPath, long size, long creationTime) throws SQLException {
+    public synchronized boolean addFile(Connection connection, String fileName, String serverPath, String localPath, long size, long creationTime) throws SQLException {
 
         boolean fileAdd = false;
-        boolean fileExist = verifyFile(thread, userId, fileName, localPath, serverPath);
-        Connection connection = getConnection(thread);
+        boolean fileExist = verifyFile(connection, userId, fileName, localPath, serverPath);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
 
             String userId = this.userId;
@@ -173,10 +191,9 @@ public class BD {
 
     }
 
-    private synchronized boolean verifyFile(ServerThread thread, String userId, String fileName, String localPath, String serverPath) throws SQLException {
-
+    private synchronized boolean verifyFile(Connection connection, String userId, String fileName, String localPath, String serverPath) throws SQLException {
         boolean isExist = false;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         Statement statement = connection.createStatement();
         String str = "SELECT file_id FROM files "
                 + "WHERE server_path = '" + serverPath + "' and local_path = '" + localPath
@@ -189,10 +206,10 @@ public class BD {
         return isExist;
     }
 
-    public String getFileID(ServerThread thread, String pathToFile) throws SQLException {
+    public String getFileID(Connection connection, String pathToFile) throws SQLException {
 
         String fileID = null;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("SELECT file_id FROM Files WHERE server_path = '" + pathToFile + "'");
@@ -204,10 +221,10 @@ public class BD {
         return fileID;
     }
 
-    public String getFileLocalPath(ServerThread thread, String pathToFile) throws SQLException {
+    public String getFileLocalPath(Connection connection, String pathToFile) throws SQLException {
 
         String filePath = null;
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         if (connection != null) {
             Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery("SELECT local_path FROM Files WHERE server_path = '" + pathToFile + "'");
@@ -219,9 +236,9 @@ public class BD {
         return filePath;
     }
 
-    public synchronized boolean deleteFile(ServerThread thread, String pathToFile) {
+    public synchronized boolean deleteFile(Connection connection, String pathToFile) {
 
-        Connection connection = getConnection(thread);
+//        Connection connection = getConnection(thread);
         boolean fileDel = false;
         if (connection != null) {
             try {
@@ -236,8 +253,8 @@ public class BD {
         return fileDel;
     }
 
-    public synchronized boolean renameFile(ServerThread thread, String tecPath, String newPath) {
-        Connection connection = getConnection(thread);
+    public synchronized boolean renameFile(Connection connection, String tecPath, String newPath) {
+//        Connection connection = getConnection(thread);
         boolean fileRen = false;
         if (connection != null) {
             try {
@@ -252,8 +269,8 @@ public class BD {
         return fileRen;
     }
 
-    public synchronized boolean transferFile(ServerThread thread, String tecPath, String newServerName) {
-        Connection connection = getConnection(thread);
+    public synchronized boolean transferFile(Connection connection, String tecPath, String newServerName) {
+//        Connection connection = getConnection(thread);
         boolean fileRen = false;
         if (connection != null) {
             try {
@@ -266,5 +283,51 @@ public class BD {
             }
         }
         return fileRen;
+    }
+
+    public boolean initDatabase(Properties properties) throws ClassNotFoundException, SQLException {
+        this.properties = properties;
+        Class.forName(properties.getProperty("driver"));
+        Connection connection = DriverManager.getConnection(
+                properties.getProperty("url"),
+                properties.getProperty("username"),
+                properties.getProperty("password")
+        );
+        return connection != null && initTables(connection);
+    }
+
+    private boolean initTables(Connection connection) throws SQLException {
+        boolean verify = false;
+        if (connection != null) {
+            Statement statement = connection.createStatement();
+            verifyTables(statement);
+            verify = true;
+        }
+        return verify;
+    }
+
+    private void verifyTables(Statement statement) throws SQLException {
+        String queryUsers = "CREATE TABLE IF NOT EXISTS USERS(id INT PRIMARY KEY NOT NULL, user VARCHAR(20) NOT NULL,"
+                + "pass VARCHAR(100) NOT NULL, uid VARCHAR(16) NOT NULL);";
+        statement.executeUpdate(queryUsers);
+        ResultSet rs = statement.executeQuery("SELECT * FROM users;");
+        if (!rs.next()) {
+            statement.executeUpdate("INSERT INTO users (id, user, pass, uid) VALUES(1, '1',"
+                    + "'iJuJpzTzQIrlIg7P0aDGbIazV6iqBrCwU6XznRu9atQ$zMM7OYCGbg13xGbgCsRgdLh0JS5TsVSHZfOnqNKDBkc',"
+                    + "'dd021c56-a886-4b04-8c8f-d894210ebe72');");
+        }
+        String queryFiles = "CREATE TABLE IF NOT EXISTS FILES(id INT PRIMARY KEY NOT NULL, user_id INT REFERENCES users(id) NOT NULL,"
+                + "file_name VARCHAR (100) NOT NULL, local_path VARCHAR(100) NOT NULL,"
+                + "server_path VARCHAR(100) NOT NULL, creation_time DATETIME NOT NULL, last_mod_time DATETIME NOT NULL,"
+                + "size INT, file_id VARCHAR(50), content BLOB);";
+        statement.executeUpdate(queryFiles);
+    }
+
+    public Connection connectToDataBase() throws SQLException {
+        return DriverManager.getConnection(
+                properties.getProperty("url"),
+                properties.getProperty("username"),
+                properties.getProperty("password")
+        );
     }
 }

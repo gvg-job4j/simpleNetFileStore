@@ -39,10 +39,10 @@ public class MultiThreadServerTest {
         Socket clientSocket = null;
         try {
             clientSocket = new Socket("172.16.172.252", Consts.PORT);
+            assertNotNull(clientSocket);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        assertNotNull(clientSocket);
     }
 
     @Test

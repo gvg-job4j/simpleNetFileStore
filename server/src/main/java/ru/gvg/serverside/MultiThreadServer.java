@@ -4,11 +4,16 @@ import ru.gvg.common.Consts;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,10 +28,10 @@ public class MultiThreadServer extends Thread {
      *
      */
     private final BD bd;
-    /**
-     *
-     */
-    private final PasswordAuthentication pa;
+//    /**
+//     *
+//     */
+//    private final PasswordAuthentication pa;
     /**
      * Area for text messages.
      */
@@ -40,10 +45,13 @@ public class MultiThreadServer extends Thread {
      */
     private ArrayList<ServerThread> threadList;
 
+    private Properties properties;
+
     /**
      * Max count parallel connections.
      */
     private ExecutorService ex = Executors.newFixedThreadPool(Consts.NTHREADS);
+
 
     /**
      * Metod create new thread for server work.
@@ -54,7 +62,7 @@ public class MultiThreadServer extends Thread {
         this.textArea = textArea;
         this.threadList = new ArrayList<>();
         this.bd = new BD();
-        this.pa = new PasswordAuthentication();
+//        this.pa = new PasswordAuthentication();
     }
 
     /**
@@ -62,18 +70,46 @@ public class MultiThreadServer extends Thread {
      */
     @Override
     public void run() {
+        try (InputStream in = BD.class.getClassLoader().getResourceAsStream("database.properties")) {
+            properties = new Properties();
+            properties.load(in);
+            if (!bd.initDatabase(properties)) {
+                textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Can not connect to database! Server not started!\n");
+                this.interrupt();
+                return;
+            }
+        } catch (IOException e) {
+            textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Can not load database properties! Server not started!\n");
+            e.printStackTrace();
+            this.interrupt();
+            return;
+        } catch (SQLException | ClassNotFoundException e) {
+            textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Can not connect to database! Server not started!\n");
+            e.printStackTrace();
+            this.interrupt();
+            return;
+        }
         try {
             InetAddress address = InetAddress.getLocalHost(); //172.16.172.252
             serverSocket = new ServerSocket(Consts.PORT, 2);
+//            if (serverSocket == null) {
+//                textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Not find free port! Server not started!\n");
+//                this.interrupt();
+//                return;
+//            }
             textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Server started. IP: " + address + ", port: " + serverSocket.getLocalPort() + "\n");
-            while (true) {
+//            while (true) {
+            while (!serverSocket.isClosed()) {
                 try {
                     Socket client = serverSocket.accept();
-                    ServerThread sThread = new ServerThread(this, client, textArea, bd, pa);
+                    ServerThread sThread = new ServerThread(this, client, textArea, bd);
+//                    sThread.setConnection(connection);
                     ex.execute(sThread);
                     threadList.add(sThread);
                 } catch (IOException e) {
-                    break;
+                    e.printStackTrace();
+                    this.interrupt();
+//                    break;
                 }
             }
         } catch (IOException e) {

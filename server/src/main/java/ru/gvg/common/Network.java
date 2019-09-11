@@ -76,9 +76,10 @@ public class Network {
     }
 
     /**
-     * @param clientSocket
-     * @param fdm
-     * @return
+     * Metod return message.
+     * @param clientSocket client socket, where message will be send.
+     * @param fdm message from client.
+     * @return message {@code AnswerMessage}.
      */
     private static AnswerMessage sendMessage(Socket clientSocket, FolderMessage fdm) {
         AnswerMessage ansMsg = null;

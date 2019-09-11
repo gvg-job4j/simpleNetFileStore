@@ -8,14 +8,13 @@ import ru.gvg.messages.*;
 
 import javax.crypto.SecretKey;
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Properties;
 
 /**
  * Create thread for connecting user.
@@ -23,7 +22,7 @@ import java.util.Date;
  * @author Valeriy Gyrievskikh
  * @since 17.03.2019
  */
-public class ServerThread implements Runnable {
+public class ServerThread implements Runnable, AutoCloseable {
 
     /**
      * Current server.
@@ -58,6 +57,8 @@ public class ServerThread implements Runnable {
      */
     private PasswordAuthentication pa;
 
+    private Connection connection;
+
 //    /**
 //     * Metod create thread for client.
 //     *
@@ -77,15 +78,13 @@ public class ServerThread implements Runnable {
      * @param mtSever Current server.
      * @param client  Current client.
      * @param sArea   Current area for text messages.
-     * @param bd      Current connection to database.
-     * @param pa      Current authentication.
      */
-    public ServerThread(MultiThreadServer mtSever, Socket client, JTextArea sArea, BD bd, PasswordAuthentication pa) {
+    public ServerThread(MultiThreadServer mtSever, Socket client, JTextArea sArea, BD bd) {
         this.sArea = sArea;
         this.client = client;
         this.mtSever = mtSever;
+//        this.pa = pa;
         this.bd = bd;
-        this.pa = pa;
     }
 
     /**
@@ -93,7 +92,58 @@ public class ServerThread implements Runnable {
      */
     @Override
     public void run() {
-        Network.sendAnswerMessage(client, null, true, Consts.DATE_FORMAT.format(new Date()) + ". Socket ready!");
+        try {
+            this.connection = bd.connectToDataBase();
+            Network.sendAnswerMessage(client, null, true, Consts.DATE_FORMAT.format(new Date()) + ". Socket ready!");
+        } catch (SQLException e) {
+            Network.sendAnswerMessage(client, null, false, Consts.DATE_FORMAT.format(new Date()) + ". No connect to database!");
+            e.printStackTrace();
+        }
+//        while (!client.isClosed()) {
+//            try {
+//                ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
+//                Object obj = ois.readObject();
+//                if (obj instanceof TransferFileMessage) {
+//                    handleTransferFileMessage((TransferFileMessage) obj);
+//                }
+//                if (obj instanceof FileMessage) {
+//                    handleFileMessage((FileMessage) obj);
+//
+//                }
+//                if (obj instanceof FolderMessage) {
+//                    handleFolderMessage((FolderMessage) obj);
+//
+//                }
+//                if (obj instanceof SecurityMessage) {
+//                    sendSecurityMessage();
+//                }
+//
+//                if (obj instanceof LoginMessage) {
+//                    handleLoginMessage((LoginMessage) obj);
+//
+//                }
+//                if (obj instanceof AnswerMessage) {
+//                    AnswerMessage ansmg = (AnswerMessage) obj;
+//                    if (ansmg.isResult()) {
+//                        sArea.append(Consts.DATE_FORMAT.format(new Date()) + ". " + ansmg.getMsg() + "\n");
+//                        break;
+//                    }
+//                }
+//
+//            } catch (ClassNotFoundException e) {
+//                e.printStackTrace();
+//                break;
+//
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                break;
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                break;
+//            }
+//        }
+//        mtSever.getThreadList().remove(this);
     }
 
     public String getUser() {
@@ -106,8 +156,8 @@ public class ServerThread implements Runnable {
 
     private String changePathFromLocalToServer(String localName) {
         StringBuilder sb = new StringBuilder(localName);
-        if (sb.indexOf("\\") != -1) {
-            sb.replace(0, sb.indexOf("\\"), bd.getUserUID());
+        if (sb.indexOf(File.pathSeparator) != -1) {
+            sb.replace(0, sb.indexOf(File.pathSeparator), bd.getUserUID());
         } else {
             sb.replace(0, sb.length(), bd.getUserUID());
         }
@@ -140,7 +190,7 @@ public class ServerThread implements Runnable {
         if (trFm.isTransfer() && trFm.isEndOfFile()) {
             if (WorkWithFiles.saveFileOnDisk(pathToFile, trFm.getData())) {
                 String fileName = new File(pathToFile).getName();
-                if (bd.addFile(this, fileName, pathToFile, trFm.getPath(), trFm.getSize(), System.currentTimeMillis())) {
+                if (bd.addFile(connection, fileName, pathToFile, trFm.getPath(), trFm.getSize(), System.currentTimeMillis())) {
                     Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". File " + trFm.getName() + " is written on disk");
                 } else {
                     Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Error writing file data " + trFm.getName() + " to BD...");
@@ -155,7 +205,7 @@ public class ServerThread implements Runnable {
 
             if (getFile) {
                 fileName = new File(pathToFile).getName();
-                if (bd.addFile(this, fileName, pathToFile, trFm.getPath(), trFm.getSize(), System.currentTimeMillis())) {
+                if (bd.addFile(connection, fileName, pathToFile, trFm.getPath(), trFm.getSize(), System.currentTimeMillis())) {
                     Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". File " + trFm.getName() + " is written on disk");
                 } else {
                     Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Error writing file data " + trFm.getName() + " to BD...");
@@ -170,7 +220,7 @@ public class ServerThread implements Runnable {
 
         //+ get file from ID
         if (fm.getName() == null && fm.getAction().equals(FileActionEnum.GET)) {
-            String pathToFile = bd.getFilePathOnServer(this, fm.getTecPath());
+            String pathToFile = bd.getFilePathOnServer(connection, fm.getTecPath());
             Network.getFile(pathToFile, client);
             return;
         } // - get file from ID
@@ -180,7 +230,7 @@ public class ServerThread implements Runnable {
 
         if (fm.getAction().equals(FileActionEnum.DELETE)) {
             if (WorkWithFiles.deleteFileOnServer(pathToFile)) {
-                if (bd.deleteFile(this, pathToFile)) {
+                if (bd.deleteFile(connection, pathToFile)) {
                     Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". File " + fm.getName() + " deleted!");
                 } else {
                     Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Error deleting file data " + fm.getName() + " from BD...");
@@ -190,9 +240,9 @@ public class ServerThread implements Runnable {
             }
 
         } else if (fm.getAction().equals(FileActionEnum.REFRESH)) {
-            String localPath = bd.getFileLocalPath(this, pathToFile);
+            String localPath = bd.getFileLocalPath(connection, pathToFile);
             if (WorkWithFiles.deleteFileOnServer(pathToFile)) {
-                if (bd.deleteFile(this, pathToFile)) {
+                if (bd.deleteFile(connection, pathToFile)) {
                     Network.sendAnswerMessage(client, null, true, localPath);
                 } else {
                     Network.sendAnswerMessage(client, null, false, Consts.DATE_FORMAT.format(new Date()) + ". Error deleting file data " + fm.getName() + " from BD...");
@@ -205,7 +255,7 @@ public class ServerThread implements Runnable {
             Network.getFile(pathToFile, client);
 
         } else if (fm.getAction().equals(FileActionEnum.GET_ID)) {
-            String fileID = bd.getFileID(this, pathToFile);
+            String fileID = bd.getFileID(connection, pathToFile);
             if (fileID != null) {
                 Network.sendAnswerMessage(client, null, true, fileID);
             } else {
@@ -219,7 +269,7 @@ public class ServerThread implements Runnable {
                 if (WorkWithFiles.verifyPathForFile(newPath)) {
                     String tecPath = tecFile.getAbsolutePath();
                     if (WorkWithFiles.renameFileOnServer(tecFile, newPath)) {
-                        boolean renamedInBD = bd.renameFile(this, tecPath, newPath);
+                        boolean renamedInBD = bd.renameFile(connection, tecPath, newPath);
                         if (renamedInBD) {
                             Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". File " + fm.getName() + "  renamed!");
                         } else {
@@ -243,7 +293,7 @@ public class ServerThread implements Runnable {
                 String fileName = tecFile.getName();
                 String newPath = Consts.DIR_PATH + newServerName + "\\" + fileName;
                 if (WorkWithFiles.transferFileOnServer(tecFile, newServerName)) {
-                    if (bd.transferFile(this, pathToFile, newPath)) {
+                    if (bd.transferFile(connection, pathToFile, newPath)) {
                         Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". File " + fm.getName() + "  transferred!");
                     } else {
                         Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Error when rewrite file data " + fm.getName() + " in BD...");
@@ -274,10 +324,10 @@ public class ServerThread implements Runnable {
         }
         user = userInfo[0];
         if (lm.getUserActionEnum().equals(UserActionEnum.ADD)) {
-            if (bd.getUser(this, userInfo[0])) {
+            if (bd.getUser(connection, userInfo[0])) {
                 Network.sendAnswerMessage(client, null, false, Consts.DATE_FORMAT.format(new Date()) + ". User already exist! Try login.");
             }
-            if (bd.addUser(this, userInfo[0], userInfo[1])) {
+            if (bd.addUser(connection, userInfo[0], userInfo[1])) {
                 Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " added.");
                 sArea.append(Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " connected. \n");
 
@@ -299,8 +349,8 @@ public class ServerThread implements Runnable {
                 }
             } //- verify user already connected.
 
-            if (bd.getUser(this, userInfo[0])) {
-                if (bd.verifyUser(this, userInfo[0], userInfo[1])) {
+            if (bd.getUser(connection, userInfo[0])) {
+                if (bd.verifyUser(this.connection, userInfo[0], userInfo[1])) {
                     Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " connected.");
                     sArea.append(Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " connected. \n");
                 } else {
@@ -311,9 +361,9 @@ public class ServerThread implements Runnable {
             }
 
         } else {
-            if (bd.getUser(this, userInfo[0])) {
-                if (bd.verifyUser(this, userInfo[0], userInfo[1])) {
-                    if (bd.changePassword(this, userInfo[0], userInfo[2])) {
+            if (bd.getUser(connection, userInfo[0])) {
+                if (bd.verifyUser(this.connection, userInfo[0], userInfo[1])) {
+                    if (bd.changePassword(connection, userInfo[0], userInfo[2])) {
                         sArea.append(Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " connected. \n");
                         Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". User " + user + " connected.");
                     } else {
@@ -329,11 +379,10 @@ public class ServerThread implements Runnable {
     }
 
     private void handleFolderMessage(FolderMessage fdm) {
-
         String pathOnServer = changePathFromLocalToServer(fdm.getName());
         String pathToDir = Consts.DIR_PATH + pathOnServer;
         if (fdm.isCreate()) {
-            if (WorkWithFiles.makeDir(pathOnServer + "\\" + fdm.getNewName())) {
+            if (WorkWithFiles.makeDir(pathOnServer + File.separator + fdm.getNewName())) {
                 Network.sendAnswerMessage(client, bd.getUserUID(), true, Consts.DATE_FORMAT.format(new Date()) + ". Folder " + fdm.getNewName() + "  created!");
             } else {
                 Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Error when create folder " + fdm.getName() + "...");
@@ -360,6 +409,17 @@ public class ServerThread implements Runnable {
             } else {
                 Network.sendAnswerMessage(client, bd.getUserUID(), false, Consts.DATE_FORMAT.format(new Date()) + ". Folder " + fdm.getName() + " not found!");
             }
+        }
+    }
+
+    public Connection getConnection() {
+        return this.connection;
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (this.connection != null) {
+            this.connection = null;
         }
     }
 }
