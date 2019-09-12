@@ -8,31 +8,60 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * Operations with files.
+ *
+ * @author Valeriy Gyrievskikh
+ * @since 28.04.2019
+ */
 public class WorkWithFiles {
-//    public static final String DIR_PATH = "D:\\FilesDB\\";
 
+    /**
+     * Metod saving data to a file.
+     *
+     * @param dir File path.
+     * @param arr Data for saving.
+     * @return Operation result.
+     */
     public static boolean saveFileOnDisk(String dir, byte[] arr) {
+        boolean saved = false;
         try {
             Files.write(Paths.get(dir), arr, StandardOpenOption.CREATE);
-            return true;
+            saved = true;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return false;
+        return saved;
     }
 
+    /**
+     * Metod checks for a file at the specified path.
+     *
+     * @param path File path.
+     * @return Operation result.
+     */
     public static boolean verifyPathForFile(String path) {
-        if (Files.exists(Paths.get(path))) {
-            return false;
-        }
-        return true;
+        return Files.exists(Paths.get(path));
     }
 
+    /**
+     * Metod get the file structure for specified user.
+     *
+     * @param user User name.
+     * @return Array of files.
+     */
     public static File[] getUserFileStructure(String user) {
         File file = new File(Consts.DIR_PATH + user);
         return file.listFiles();
     }
 
+    /**
+     * Metod calculate used space for specified user.
+     *
+     * @param user  User name.
+     * @param files Array of files.
+     * @return Used space.
+     */
     public static int getUserFileSize(String user, File[] files) {
         int size = 0;
         for (int i = 0; i < files.length; i++) {
@@ -45,6 +74,12 @@ public class WorkWithFiles {
         return size;
     }
 
+    /**
+     * Metod create folder with specified name.
+     *
+     * @param nameDir Folder name.
+     * @return Operation result.
+     */
     public static boolean makeDir(String nameDir) {
         boolean makeDir = false;
         String pathDir = Consts.DIR_PATH + nameDir;
@@ -57,70 +92,123 @@ public class WorkWithFiles {
         return makeDir;
     }
 
+    /**
+     * Metod retrieves the file at the specified path.
+     *
+     * @param path File path.
+     * @return Received file (or null).
+     */
     public static File getFileOnServer(String path) {
         File file = new File(path);
-        if (file.exists() && file.isFile()) {
-            return file;
+        if (!(file.exists() && file.isFile())) {
+            file = null;
         }
-        return null;
+        return file;
     }
 
+    /**
+     * Metod delete file at the specified path.
+     *
+     * @param path File path.
+     * @return Operation result.
+     */
     public static boolean deleteFileOnServer(String path) {
         File file = new File(path);
         return file.exists() && file.isFile() && file.delete();
     }
 
+    /**
+     * Metod renamed selected file.
+     *
+     * @param file    Selected file.
+     * @param newName New name.
+     * @return Operation result.
+     */
     public static boolean renameFileOnServer(File file, String newName) {
-        return file.renameTo(new File(newName));
-    }
-
-    public static boolean transferFileOnServer(File file, String newName) {
         String tecName = file.getAbsolutePath();
-        int index1 = tecName.lastIndexOf("\\");
-        StringBuilder nameBuilder = new StringBuilder(Consts.DIR_PATH + newName);
-        nameBuilder.append(tecName.substring(index1));
+        StringBuilder nameBuilder = new StringBuilder(tecName);
+        int index1 = tecName.lastIndexOf(File.separator);
+        nameBuilder.replace(index1 + 1, tecName.length(), newName);
         return file.renameTo(new File(nameBuilder.toString()));
     }
 
-    public static boolean renameFolderOnServer(File folder, String newName) {
-
-        File file = new File(folder.getAbsolutePath());
-        if (file.exists() && file.isDirectory() && file.listFiles().length == 0) {
-            if (file.renameTo(new File(newName))) {
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Metod transfer selected file to another folder.
+     *
+     * @param file    Selected file.
+     * @param newName New folder.
+     * @return Operation result.
+     */
+    public static boolean transferFileOnServer(File file, String newName) {
+        String tecName = file.getAbsolutePath();
+        int index1 = tecName.lastIndexOf(File.separator);
+        String newFileName = Consts.DIR_PATH + newName + tecName.substring(index1);
+        return file.renameTo(new File(newFileName));
     }
 
+    /**
+     * Metod renamed selected folder.
+     *
+     * @param folder  Selected folder.
+     * @param newName New folder name.
+     * @return Operation result.
+     */
+    public static boolean renameFolderOnServer(File folder, String newName) {
+        boolean renamed = false;
+        File file = new File(folder.getAbsolutePath());
+        if (file.exists() && file.isDirectory() && file.listFiles().length == 0) {
+            String newFolderName = createNewPathForFile(file, newName);
+            if (file.renameTo(new File(newFolderName))) {
+                renamed = true;
+            }
+        }
+        return renamed;
+    }
+
+    /**
+     * Metod deletes a folder on the server.
+     *
+     * @param nameDir Folder name to delete.
+     * @return Operation result.
+     */
     public static boolean deleteDirOnServer(String nameDir) {
+        boolean deleted = false;
         File file = new File(nameDir);
         if (file.exists() && file.isDirectory() && file.listFiles().length == 0) {
             try {
-                Files.delete(Paths.get(nameDir));
+                deleted = Files.deleteIfExists(Paths.get(nameDir));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (!new File(nameDir).exists()) {
-                return true;
-            }
         }
-        return false;
+        return deleted;
     }
 
+    /**
+     * Metod retrieves folder at the specified path.
+     *
+     * @param path Specified path.
+     * @return Folder (or null).
+     */
     public static File getFolderOnServer(String path) {
         File file = new File(path);
-        if (file.exists() && file.isDirectory()) {
-            return file;
+        if (!(file.exists() && file.isDirectory())) {
+            file = null;
         }
-        return null;
+        return file;
     }
 
+    /**
+     * Metod created path for selected file.
+     *
+     * @param file    Selected file.
+     * @param newName New file name.
+     * @return File absolute pathname.
+     */
     public static String createNewPathForFile(File file, String newName) {
         String tecName = file.getAbsolutePath();
         StringBuilder nameBuilder = new StringBuilder(tecName);
-
-        int index1 = tecName.lastIndexOf("\\");
+        int index1 = tecName.lastIndexOf(File.separator);
         int index2 = tecName.lastIndexOf(".");
         if (index2 != -1) {
             nameBuilder.replace(index1 + 1, index2, newName);
