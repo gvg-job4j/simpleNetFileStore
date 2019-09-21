@@ -3,45 +3,50 @@ package ru.gvg.serverside;
 import javax.crypto.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
 public class MyDropBoxSecurity {
 
-    SecretKey key;
+    /**
+     * Pair of secret keys.
+     */
+    KeyPair keyPair;
 
     /**
-     * Конструктор
+     * Constructor, initializing a pair of secret keys.
      *
      * @throws NoSuchAlgorithmException
-     * @throws NoSuchPaddingException
-     * @throws InvalidKeyException
      */
-
-
     public MyDropBoxSecurity() throws NoSuchAlgorithmException {
-        key = KeyGenerator.getInstance("DES").generateKey();
-    }
-
-    public SecretKey getKey() {
-        return key;
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPair = keyPairGenerator.generateKeyPair();
     }
 
     /**
-     * Функция шифровaния
+     * Metod returns public key for encryption.
      *
-     * @param str строка открытого текста
-     * @return зашифрованная строка в формате Base64
+     * @return Public key.
      */
-    public static String encrypt(String str, SecretKey key) {
+    public PublicKey getOpenKey() {
+        return keyPair.getPublic();
+    }
 
-        Cipher ecipher = null;
+    /**
+     * Metod encrypt incoming string.
+     *
+     * @param str Plain text string.
+     * @param key Public key.
+     * @return Encrypted string in the format Base64.
+     */
+    public static String encrypt(String str, Key key) {
+
+        String encrypted = null;
         try {
-            ecipher = Cipher.getInstance("DES");
+            Cipher ecipher = Cipher.getInstance("RSA");
             ecipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] utf8 = str.getBytes("UTF8");
             byte[] enc = ecipher.doFinal(utf8);
-            return new sun.misc.BASE64Encoder().encode(enc);
+            encrypted = new sun.misc.BASE64Encoder().encode(enc);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (NoSuchPaddingException e) {
@@ -55,24 +60,24 @@ public class MyDropBoxSecurity {
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
-        return null;
+        return encrypted;
     }
 
     /**
-     * Функция расшифрования
+     * Metod decrypt incoming string.
      *
-     * @param str зашифрованная строка в формате Base64
-     * @return расшифрованная строка
+     * @param str Encrypted string in the format Base64.
+     * @return Decrypted string.
      */
     public String decrypt(String str) {
 
-        Cipher dcipher = null;
+        String decrypted = null;
         try {
-            dcipher = Cipher.getInstance("DES");
-            dcipher.init(Cipher.DECRYPT_MODE, key);
+            Cipher dcipher = Cipher.getInstance("RSA");
+            dcipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
             byte[] dec = new sun.misc.BASE64Decoder().decodeBuffer(str);
             byte[] utf8 = dcipher.doFinal(dec);
-            return new String(utf8, "UTF8");
+            decrypted = new String(utf8, "UTF8");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (NoSuchPaddingException e) {
@@ -86,7 +91,6 @@ public class MyDropBoxSecurity {
         } catch (BadPaddingException e) {
             e.printStackTrace();
         }
-        return null;
+        return decrypted;
     }
-
 }

@@ -88,6 +88,11 @@ public class MultiThreadServer extends Thread {
             e.printStackTrace();
             this.interrupt();
             return;
+        } catch (Exception e) {
+            textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Can not init database! Server not started!\n");
+            e.printStackTrace();
+            this.interrupt();
+            return;
         }
         try {
             InetAddress address = InetAddress.getLocalHost(); //172.16.172.252
@@ -109,7 +114,7 @@ public class MultiThreadServer extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                     this.interrupt();
-//                    break;
+                    break;
                 }
             }
         } catch (IOException e) {

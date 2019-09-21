@@ -1,12 +1,15 @@
 package ru.gvg.serverside;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import ru.gvg.common.Consts;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Date;
 import java.util.Properties;
 
@@ -34,6 +37,18 @@ public class BDTest {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @After
+    public void clearDatabase() throws SQLException {
+        Connection connection = testBd.connectToDataBase();
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("DELETE FROM Users WHERE USER = 'test';");
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -43,13 +58,14 @@ public class BDTest {
 
     @Test
     public void getUser() throws Exception {
-//        boolean verified = testBd.verifyUser(testBd.connectToDataBase(), "1",
-//                "iJuJpzTzQIrlIg7P0aDGbIazV6iqBrCwU6XznRu9atQ$zMM7OYCGbg13xGbgCsRgdLh0JS5TsVSHZfOnqNKDBkc");
-//        assertTrue(verified);
+        boolean verified = testBd.verifyUser(testBd.connectToDataBase(), "1", "1");
+        assertTrue(verified);
     }
 
     @Test
     public void addUser() throws Exception {
+        boolean added = testBd.addUser(testBd.connectToDataBase(), "test", "test");
+        assertTrue(added);
     }
 
     @Test

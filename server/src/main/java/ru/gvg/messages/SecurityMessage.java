@@ -1,12 +1,20 @@
 package ru.gvg.messages;
 
-import javax.crypto.SecretKey;
 import java.io.Serializable;
+import java.security.Key;
 
 public class SecurityMessage implements Serializable {
-    private SecretKey key;
+    /**
+     * Publc key for encryption.
+     */
+    private Key key;
 
-    public SecurityMessage(SecretKey key) {
+    /**
+     * Constructor, initializing a public key.
+     *
+     * @param key Generated public key.
+     */
+    public SecurityMessage(Key key) {
         this.key = key;
     }
 
@@ -14,7 +22,12 @@ public class SecurityMessage implements Serializable {
 
     }
 
-    public SecretKey getKey() {
+    /**
+     * Metod returns public key.
+     *
+     * @return Public key.
+     */
+    public Key getKey() {
         return key;
     }
 }

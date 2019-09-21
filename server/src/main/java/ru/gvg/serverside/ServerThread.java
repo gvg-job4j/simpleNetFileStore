@@ -6,18 +6,17 @@ import ru.gvg.common.Network;
 import ru.gvg.common.UserActionEnum;
 import ru.gvg.messages.*;
 
-import javax.crypto.SecretKey;
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
+import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Properties;
 
 /**
- * Create thread for connecting user.
+ * Creates a thread for the connecting user.
  *
  * @author Valeriy Gyrievskikh
  * @since 17.03.2019
@@ -41,15 +40,15 @@ public class ServerThread implements Runnable, AutoCloseable {
      */
     private String user;
     /**
-     * Current database connection.
+     * Current database tool.
      */
     private BD bd;
     /**
-     * Current authorization key.
+     * Current public key for encryption.
      */
-    private SecretKey threadKey;
+    private Key threadKey;
     /**
-     *
+     * Current security tool.
      */
     private MyDropBoxSecurity threadMyDropBoxSecurity;
     /**
@@ -57,6 +56,9 @@ public class ServerThread implements Runnable, AutoCloseable {
      */
     private PasswordAuthentication pa;
 
+    /**
+     * Current database connection.
+     */
     private Connection connection;
 
 //    /**
@@ -167,7 +169,7 @@ public class ServerThread implements Runnable, AutoCloseable {
     private void sendSecurityMessage() {
         try {
             threadMyDropBoxSecurity = new MyDropBoxSecurity();
-            threadKey = threadMyDropBoxSecurity.getKey();
+            threadKey = threadMyDropBoxSecurity.getOpenKey();
 
             ObjectOutputStream oos = null;
             try {
