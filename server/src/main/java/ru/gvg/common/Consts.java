@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 public class Consts {
 
     /**
-     * Max file size for one segment.
+     * Max file size for one segment in bytes.
      */
     public static final int FILE_SIZE = 10485760;
     /**
@@ -23,21 +23,21 @@ public class Consts {
      * Path for file store folder on server.
      */
     public static final String DIR_PATH = "D:" + File.separator + "FilesDB" + File.separator;
+//    public static final String DIR_PATH = "C:" + File.separator + "gurevskikhvg" + File.separator + "FilesDB" + File.separator;
     /**
      * Default port for client connect.
      */
     public static final int PORT = 8089;
     /**
-     * Default file store space for user.
+     * Default file store space for user in megabytes.
      */
     public static final int USER_SIZE = 200;
     /**
-     * Default time for user session.
+     * Default time for user session in seconds.
      */
     public static final int SESSION_TIME = 300;
     /**
      * Maximum number of simultaneously opened connections.
      */
     public static final int NTHREADS = 2;
-
 }

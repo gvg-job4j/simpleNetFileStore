@@ -1,16 +1,10 @@
 package ru.gvg.serverside;
 
-import ru.gvg.common.Consts;
-
 import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStream;
-import java.sql.DriverManager;
-import java.util.Date;
-import java.util.Properties;
 
 /**
  * Server side graphic interface.

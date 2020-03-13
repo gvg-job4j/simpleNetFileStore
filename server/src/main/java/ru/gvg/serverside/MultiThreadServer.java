@@ -8,8 +8,6 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,55 +23,50 @@ import java.util.concurrent.Executors;
  */
 public class MultiThreadServer extends Thread {
     /**
-     *
+     * Database connection manager.
      */
-    private final BD bd;
-//    /**
-//     *
-//     */
-//    private final PasswordAuthentication pa;
+    private final DataBaseManager dataBaseManager;
+
     /**
      * Area for text messages.
      */
     private final JTextArea textArea;
+
     /**
      * Open socket for client connections.
      */
     private ServerSocket serverSocket;
+
     /**
      * List with current threads {@code ServerThread}.
      */
     private ArrayList<ServerThread> threadList;
-
-    private Properties properties;
 
     /**
      * Max count parallel connections.
      */
     private ExecutorService ex = Executors.newFixedThreadPool(Consts.NTHREADS);
 
-
     /**
-     * Metod create new thread for server work.
+     * Method creates new thread for server work.
      *
      * @param textArea Area for text messages.
      */
     MultiThreadServer(JTextArea textArea) {
         this.textArea = textArea;
         this.threadList = new ArrayList<>();
-        this.bd = new BD();
-//        this.pa = new PasswordAuthentication();
+        this.dataBaseManager = new DataBaseManager();
     }
 
     /**
-     * Create server socket, create threads for connected clients.
+     * Method creates server socket, creates threads for connected clients.
      */
     @Override
     public void run() {
-        try (InputStream in = BD.class.getClassLoader().getResourceAsStream("database.properties")) {
-            properties = new Properties();
+        try (InputStream in = DataBaseManager.class.getClassLoader().getResourceAsStream("database.properties")) {
+            Properties properties = new Properties();
             properties.load(in);
-            if (!bd.initDatabase(properties)) {
+            if (!dataBaseManager.initDatabase(properties)) {
                 textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Can not connect to database! Server not started!\n");
                 this.interrupt();
                 return;
@@ -95,20 +88,13 @@ public class MultiThreadServer extends Thread {
             return;
         }
         try {
-            InetAddress address = InetAddress.getLocalHost(); //172.16.172.252
+            InetAddress address = InetAddress.getLocalHost();
             serverSocket = new ServerSocket(Consts.PORT, 2);
-//            if (serverSocket == null) {
-//                textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Not find free port! Server not started!\n");
-//                this.interrupt();
-//                return;
-//            }
             textArea.append(Consts.DATE_FORMAT.format(new Date()) + ". Server started. IP: " + address + ", port: " + serverSocket.getLocalPort() + "\n");
-//            while (true) {
             while (!serverSocket.isClosed()) {
                 try {
                     Socket client = serverSocket.accept();
-                    ServerThread sThread = new ServerThread(this, client, textArea, bd);
-//                    sThread.setConnection(connection);
+                    ServerThread sThread = new ServerThread(this, client, textArea);
                     ex.execute(sThread);
                     threadList.add(sThread);
                 } catch (IOException e) {
@@ -125,7 +111,7 @@ public class MultiThreadServer extends Thread {
     }
 
     /**
-     * Metod close server socket.
+     * Metod closes server socket.
      */
     void stopCurrentServer() {
         if (serverSocket != null) {
@@ -141,9 +127,9 @@ public class MultiThreadServer extends Thread {
     }
 
     /**
-     * Metod return current list with clients threads.
+     * Metod returns current list with clients threads.
      *
-     * @return
+     * @return List with clients threads.
      */
     public ArrayList<ServerThread> getThreadList() {
         return threadList;

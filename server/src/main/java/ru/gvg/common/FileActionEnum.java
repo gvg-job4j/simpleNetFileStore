@@ -9,6 +9,7 @@ package ru.gvg.common;
 public enum FileActionEnum {
     SEND,
     GET,
+    GET_BY_ID,
     GET_ID,
     DELETE,
     RENAME,

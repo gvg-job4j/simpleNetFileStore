@@ -4,7 +4,13 @@ import ru.gvg.common.UserActionEnum;
 
 import java.io.Serializable;
 
-public class LoginMessage implements Serializable {
+/**
+ * Creates a message with information about user and user action.
+ *
+ * @author Valeriy Gyrievskikh
+ * @since 01.03.2019
+ */
+public class LoginMessage implements Serializable, Messaging {
 
     /**
      * Encrypted string for authorization.
@@ -16,7 +22,7 @@ public class LoginMessage implements Serializable {
     private UserActionEnum userActionEnum;
 
     /**
-     * Constructor, initializing user action and string for authorization.
+     * Initializes message with parameters.
      *
      * @param strongName Encrypted string for authorization.
      * @param userAction User action.
@@ -27,7 +33,7 @@ public class LoginMessage implements Serializable {
     }
 
     /**
-     * Metod returns string for authorization.
+     * Method returns string for authorization.
      *
      * @return String for authorization.
      */
@@ -36,7 +42,7 @@ public class LoginMessage implements Serializable {
     }
 
     /**
-     * Metod returns user action.
+     * Method returns user action.
      *
      * @return User action.
      */

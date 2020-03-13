@@ -3,14 +3,20 @@ package ru.gvg.messages;
 import java.io.Serializable;
 import java.security.Key;
 
-public class SecurityMessage implements Serializable {
+/**
+ * Creates a message with information about public key.
+ *
+ * @author Valeriy Gyrievskikh
+ * @since 01.03.2019
+ */
+public class SecurityMessage implements Serializable, Messaging {
     /**
      * Publc key for encryption.
      */
     private Key key;
 
     /**
-     * Constructor, initializing a public key.
+     * Initializes message with parameters.
      *
      * @param key Generated public key.
      */
@@ -18,12 +24,15 @@ public class SecurityMessage implements Serializable {
         this.key = key;
     }
 
+    /**
+     * Initializes message without parameters.
+     */
     public SecurityMessage() {
 
     }
 
     /**
-     * Metod returns public key.
+     * Method returns public key.
      *
      * @return Public key.
      */

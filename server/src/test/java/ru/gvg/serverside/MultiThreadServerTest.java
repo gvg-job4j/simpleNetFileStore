@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 public class MultiThreadServerTest {
 
     private MultiThreadServer server;
+    private String ipAdress = "localhost";
 
     @Before
     public void createNewServer() {
@@ -38,7 +39,7 @@ public class MultiThreadServerTest {
         server.start();
         Socket clientSocket = null;
         try {
-            clientSocket = new Socket("172.16.172.252", Consts.PORT);
+            clientSocket = new Socket(ipAdress, Consts.PORT);
             assertNotNull(clientSocket);
         } catch (IOException e) {
             e.printStackTrace();
@@ -49,7 +50,7 @@ public class MultiThreadServerTest {
     public void whenClientConnectedThenServerSendAnswer() {
         server.start();
         String msg = "";
-        try (Socket socket = new Socket("172.16.172.252", Consts.PORT)) {
+        try (Socket socket = new Socket(ipAdress, Consts.PORT)) {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             msg = ((AnswerMessage) in.readObject()).getMsg();
             in.close();
