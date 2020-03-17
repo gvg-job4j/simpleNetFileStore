@@ -111,7 +111,7 @@ public class MultiThreadServer extends Thread {
     }
 
     /**
-     * Metod closes server socket.
+     * Method closes server socket.
      */
     void stopCurrentServer() {
         if (serverSocket != null) {
@@ -127,12 +127,11 @@ public class MultiThreadServer extends Thread {
     }
 
     /**
-     * Metod returns current list with clients threads.
+     * Method returns current list with clients threads.
      *
      * @return List with clients threads.
      */
     public ArrayList<ServerThread> getThreadList() {
         return threadList;
     }
-
 }

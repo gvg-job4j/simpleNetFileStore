@@ -68,6 +68,7 @@ public class StartFrameActionListener implements ActionListener {
                         frame.getTextArea().append(Consts.DATE_FORMAT.format(new Date()) + ". " + inMessage.getMsg() + "\n");
                         JOptionPane.showMessageDialog(null, inMessage.getMsg(), "", JOptionPane.WARNING_MESSAGE);
                         if (inMessage.isResult()) {
+                            frame.readWriteSystemFile(false);
                             String login = frame.getLogin().getText();
                             frame.dispose();
                             if (inMessage.isResult()) {

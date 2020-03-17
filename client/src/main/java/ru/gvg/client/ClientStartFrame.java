@@ -13,6 +13,7 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.Socket;
 import java.text.ParseException;
+import java.util.Properties;
 
 /**
  * @author Valeriy Gyrievskikh
@@ -91,6 +92,9 @@ public class ClientStartFrame extends JFrame {
      * User size value.
      */
     private int userSize;
+
+    private String loginFileName = System.getProperty("user.dir") + File.separator + "client" + File.separator + "src"
+            + File.separator + "main" + File.separator + "resources" + File.separator + "login.properties";
 
     /**
      * Method opens client start window.
@@ -253,7 +257,7 @@ public class ClientStartFrame extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setKeyListeners();
         setStartWiew();
-//        readWriteSystemFile(true);
+        readWriteSystemFile(true);
     }
 
     /**
@@ -401,41 +405,67 @@ public class ClientStartFrame extends JFrame {
      *
      * @param read Indicator of data reading.
      */
-    private void readWriteSystemFile(boolean read) {
-        File loadFile = new File("System");
-        StringBuilder stb = new StringBuilder();
+    void readWriteSystemFile(boolean read) {
+        Properties loginProperties = new Properties();
         if (read) {
-            if (loadFile.exists()) {
-                try {
-                    FileReader fr = new FileReader(loadFile);
-                    int c = 0;
-                    while ((c = fr.read()) != -1) {
-                        stb.append((char) c);
-                    }
-                    String[] fileData = stb.toString().split(";");
-                    if (fileData.length > 0) {
-                        ipAdress.setText(fileData[0]);
-                        port.setText(fileData[1]);
-                        if (fileData.length == 3) {
-                            login.setText(fileData[2]);
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            readProperties(loginProperties);
         } else {
-            try {
-                if (!loadFile.exists()) {
-                    loadFile.createNewFile();
-                }
-                stb.append(ipAdress.getText()).append(";").append(port.getText()).append(";").append(login.getText());
-                FileWriter fwr = new FileWriter(loadFile, false);
-                fwr.write(stb.toString());
-                fwr.flush();
+            writeProperties(loginProperties);
+        }
+    }
+
+    /**
+     * Method writes properties from the frame to the properties file.
+     *
+     * @param loginProperties Current properties.
+     */
+    private void writeProperties(Properties loginProperties) {
+        boolean changed = false;
+        if (!login.getText().isEmpty()) {
+            loginProperties.setProperty("login", login.getText());
+            changed = true;
+        }
+        if (!port.getText().isEmpty()) {
+            loginProperties.setProperty("port", port.getText());
+            changed = true;
+        }
+        if (!ipAdress.getText().isEmpty()) {
+            loginProperties.setProperty("ipAdress", ipAdress.getText());
+            changed = true;
+        }
+        if (changed) {
+            try (OutputStream out = new FileOutputStream(loginFileName)) {
+                loginProperties.store(out, "");
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    /**
+     * Method reads properties from file.
+     *
+     * @param loginProperties Current properties.
+     */
+    private void readProperties(Properties loginProperties) {
+        try (InputStream in = new FileInputStream(loginFileName)) {
+            loginProperties.load(in);
+            if (!loginProperties.isEmpty()) {
+                String propertyIpAdress = loginProperties.getProperty("ipAdress");
+                String propertyPort = loginProperties.getProperty("port");
+                String propertyLogin = loginProperties.getProperty("login");
+                if (!propertyIpAdress.isEmpty()) {
+                    ipAdress.setText(propertyIpAdress);
+                }
+                if (!propertyPort.isEmpty()) {
+                    port.setText(propertyPort);
+                }
+                if (!propertyLogin.isEmpty()) {
+                    login.setText(propertyLogin);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

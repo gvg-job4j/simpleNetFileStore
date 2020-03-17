@@ -409,11 +409,7 @@ public class DataBaseManager {
     public boolean initDatabase(Properties properties) throws Exception {
         this.properties = properties;
         Class.forName(properties.getProperty("driver"));
-        Connection connection = DriverManager.getConnection(
-                properties.getProperty("url"),
-                properties.getProperty("username"),
-                properties.getProperty("password")
-        );
+        Connection connection = DriverManager.getConnection(properties.getProperty("url"));
         return connection != null && initTables(connection);
     }
 
@@ -446,21 +442,12 @@ public class DataBaseManager {
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,"
                 + "user VARCHAR(20) UNIQUE NOT NULL, pass VARCHAR(100) NOT NULL, uid VARCHAR(16) NOT NULL);";
         statement.executeUpdate(queryUsers);
-//        ResultSet rs = statement.executeQuery("SELECT * FROM users;");
-//        if (!rs.next()) {
-//            String uid = UUID.randomUUID().toString();
-//            String usrPass = PasswordAuthentication.getSaltedHash("[1]");
-//            statement.executeUpdate("INSERT INTO USERS (user, pass, uid) VALUES('1',"
-//                    + "'" + usrPass + "',"
-//                    + "'" + uid + "');");
-//        }
         String queryFiles = "CREATE TABLE IF NOT EXISTS FILES(id INTEGER PRIMARY KEY UNIQUE NOT NULL,"
                 + " user_id INTEGER REFERENCES users(id) NOT NULL,"
                 + "file_name VARCHAR (100) NOT NULL, local_path VARCHAR(100) NOT NULL,"
                 + "server_path VARCHAR(100) NOT NULL, creation_time DATETIME NOT NULL,"
                 + " last_mod_time DATETIME NOT NULL,"
                 + "size INT NOT NULL, file_id VARCHAR(50) UNIQUE NOT NULL);";
-//                + "content BLOB);";
         statement.executeUpdate(queryFiles);
     }
 
@@ -471,10 +458,6 @@ public class DataBaseManager {
      * @throws SQLException Possible exception.
      */
     public Connection connectToDataBase() throws SQLException {
-        return DriverManager.getConnection(
-                properties.getProperty("url"),
-                properties.getProperty("username"),
-                properties.getProperty("password")
-        );
+        return DriverManager.getConnection(properties.getProperty("url"));
     }
 }
